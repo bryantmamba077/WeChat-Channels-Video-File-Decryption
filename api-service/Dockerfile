@@ -63,6 +63,7 @@ COPY --from=builder /root/.cache/ms-playwright /ms-playwright
 COPY server.js .
 COPY worker.html .
 COPY docs.html .
+COPY lib ./lib
 COPY wechat_files ./wechat_files
 
 # Create non-root user for security

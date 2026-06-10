@@ -15,6 +15,37 @@
 - **健康检查**: 内置服务健康监控
 - **大文件支持**: 最大支持 500MB 视频文件
 
+## 如何获取 decode_key？（常见问题）
+
+> 对应 issue #1 / #9。**本仓库只负责解密，不负责抓取微信接口。**
+
+`decode_key` 和加密视频 URL 都来自**微信原始接口的响应 JSON**，结构如下：
+
+```json
+{
+  "data": {
+    "object_desc": {
+      "media": [{
+        "decode_key": "2136343393",   // 解密种子（即本服务的 decode_key）
+        "url": "https://...",          // 加密视频下载链接
+        "file_size": 14088528
+      }]
+    }
+  }
+}
+```
+
+获取途径（任选其一）：
+
+1. **第三方接口**：例如 `api.tikhub.io` 的视频号详情接口，响应直接包含
+   `decode_key` 与加密视频 URL。
+2. **自行抓包**：在 PC 端微信安装 SSL 证书抓包，打开视频号并搜索关键字，
+   即可在接口响应 JSON 中找到 `decode_key` 和对应加密视频 URL。
+   > 注意：微信部分流量走私有协议 mmtls，普通 HTTPS 抓包不一定能拿到，需视
+   > 客户端版本与抓包方案而定。
+
+拿到 `decode_key` 和加密视频文件后，再调用本服务 `POST /api/decrypt` 解密。
+
 ## 架构说明
 
 ```
@@ -27,7 +58,8 @@
 │              Express.js API Server                   │
 │  (Node.js + Multer + CORS)                          │
 └───────────────────┬─────────────────────────────────┘
-                    │ RPC Call via page.evaluate()
+                    │ ① RPC：仅生成 128KB 密钥流
+                    │   page.evaluate(generateKeystream)
                     ▼
 ┌─────────────────────────────────────────────────────┐
 │           Playwright Chromium Browser                │
@@ -39,12 +71,23 @@
 │  │  └─────────────────────────────────┘      │      │
 │  │                                            │      │
 │  │  RPC Functions:                            │      │
-│  │  - generateKeystream(decodeKey)            │      │
-│  │  - decryptVideo(encrypted, keystream)      │      │
+│  │  - generateKeystream(decodeKey)  ← 唯一职责 │      │
 │  │  - checkWasmStatus()                       │      │
 │  └───────────────────────────────────────────┘      │
+└───────────────────┬─────────────────────────────────┘
+                    │ ② 返回 128KB 密钥流
+                    ▼
+┌─────────────────────────────────────────────────────┐
+│   ③ Node.js 端 XOR 解密（lib/decrypt.js）           │
+│   视频整段 Buffer 不进浏览器 → 规避 CDP 100MB 上限   │
 └─────────────────────────────────────────────────────┘
 ```
+
+> **v2.1 架构变更（修复大文件解密崩溃）**：旧版把整段视频经 CDP 管道
+> 传入浏览器做 XOR，base64 膨胀后超过 Chromium DevTools 协议 100MB 单条
+> 消息上限，导致 80MB+ 文件解密时页面崩溃（issue #4 / #6 / #8）。现在
+> 浏览器只负责生成 128KB 密钥流，XOR 解密改在 Node.js 端用 Buffer 完成，
+> 文件大小不再受此限制。
 
 ### 为什么选择 Playwright?
 
@@ -129,7 +172,7 @@ GET /
 ```json
 {
   "service": "WeChat Channels Video Decryption API",
-  "version": "2.0.0",
+  "version": "2.1.0",
   "engine": "Playwright + Chromium",
   "author": "Evil0ctal",
   "endpoints": {
@@ -153,7 +196,7 @@ GET /health
 {
   "status": "ok",
   "service": "wechat-decrypt-api",
-  "version": "2.0.0",
+  "version": "2.1.0",
   "engine": "playwright",
   "wasm": {
     "loaded": true,
@@ -428,18 +471,21 @@ const keystreamBase64 = await page.evaluate(async (key) => {
 
 **关键**: 使用 `http://` 而非 `file://` 协议，避免浏览器 CORS 限制，使本地 WASM 文件加载成功。
 
-### 3. 数据传输
+### 3. 数据传输（v2.1：视频不进浏览器）
 
-使用 Base64 编码在 Node.js 和浏览器之间传输二进制数据:
+浏览器与 Node.js 之间**只传输 128KB 密钥流**，加密视频本身始终留在 Node.js 端：
 
 ```javascript
-// Node.js → Browser
-const encryptedBase64 = videoFile.buffer.toString('base64');
-
-// Browser → Node.js
-const decryptedBase64 = await page.evaluate(...);
-const decrypted = Buffer.from(decryptedBase64, 'base64');
+// Browser → Node.js：仅密钥流（base64，约 175KB，远小于 CDP 100MB 上限）
+const keystreamBase64 = await page.evaluate(
+    async (key) => await window.generateKeystream(key),
+    decode_key
+);
+const keystream = Buffer.from(keystreamBase64, 'base64');
 ```
+
+> 旧版会把整段视频 `toString('base64')` 传入浏览器，80MB 文件膨胀到约
+> 107MB，超过 CDP 管道 100MB 上限而导致页面崩溃。v2.1 不再传输视频数据。
 
 ### 4. Isaac64 密钥流生成
 
@@ -455,15 +501,24 @@ window.wasm_isaac_generate = function(ptr, size) {
 
 **重要**: 密钥流必须反转 (`reverse()`) 才能正确解密，这是微信特有的实现细节。
 
-### 5. XOR 解密
+### 5. XOR 解密（v2.1：Node.js 端执行）
 
-前 128KB 数据通过 XOR 操作解密:
+微信仅加密文件**前 128KB**，其余为明文。XOR 解密在 Node.js 端用 Buffer 完成
+（`lib/decrypt.js` 的 `decryptBuffer`），无需把视频送进浏览器：
 
 ```javascript
-for (let i = 0; i < 131072 && i < encrypted.length; i++) {
-    decrypted[i] = encrypted[i] ^ keystream[i];
+function decryptBuffer(encrypted, keystream) {
+    const decrypted = Buffer.from(encrypted); // 明文部分原样保留
+    const decryptLen = Math.min(KEYSTREAM_SIZE, encrypted.length, keystream.length);
+    for (let i = 0; i < decryptLen; i++) {
+        decrypted[i] = encrypted[i] ^ keystream[i];
+    }
+    return decrypted;
 }
 ```
+
+该逻辑与 Python CLI（`decrypt_wechat_video_cli.py`）字节级一致，并有单元测试
+（`npm test`）覆盖含 120MB 大文件在内的边界场景。
 
 ## 故障排除
 
@@ -506,6 +561,20 @@ docker-compose build --no-cache
 2. 检查 API 响应中的错误信息
 3. 验证解密文件的前 12 字节应为: `00 00 00 XX 66 74 79 70` (MP4 签名)
 
+### 问题: 大文件（80MB+）解密报错 "Target page... has been closed"
+
+**症状**（issue #4 / #6 / #8）:
+```
+page.evaluate: Target page, context or browser has been closed
+Too large read data is pending: capacity=104857600 ...
+```
+
+**原因**: 旧版（≤ v2.0）把整段视频经 CDP 管道传入浏览器做 XOR，base64 膨胀后
+超过 Chromium DevTools 协议 100MB 单条消息上限，导致页面崩溃。
+
+**解决方案**: 升级到 **v2.1+**。XOR 解密已移至 Node.js 端，浏览器只生成 128KB
+密钥流，文件大小不再受此限制（仅受 multer 500MB 与服务器内存约束）。
+
 ### 问题: 文件上传失败 (413 错误)
 
 **症状**:
@@ -537,9 +606,11 @@ deploy:
       memory: 4G     # 增加内存限制
 ```
 
-### 3. 启用请求缓存
+### 3. 密钥流缓存（v2.1 已内置）
 
-对于相同的 decode_key，可以缓存生成的密钥流以提高性能。
+相同 `decode_key` 的密钥流恒定，服务端已内置 LRU 缓存：命中后跳过浏览器 WASM
+调用（并发接口连页面池都不占用）。缓存上限可通过环境变量 `KEYSTREAM_CACHE_MAX`
+配置（默认 100）。
 
 ### 4. 负载均衡
 
@@ -568,6 +639,14 @@ Evil0ctal - evil0ctal1985@gmail.com
 - WeChat WASM: https://aladin.wxqcloud.qq.com/aladin/ffmepeg/video-decode/1.2.46/
 
 ## 更新日志
+
+### v2.1.0 (2026-06-09)
+- **修复大文件解密崩溃**（issue #4 / #6 / #8）：XOR 解密从浏览器移至 Node.js 端，
+  视频数据不再经 CDP 管道传输，规避 DevTools 协议 100MB 单条消息上限。80MB+ /
+  100MB+ / 300MB+ 文件均可正常解密。
+- **新增密钥流 LRU 缓存**：相同 `decode_key` 跳过浏览器 WASM 调用，可经
+  `KEYSTREAM_CACHE_MAX` 配置上限。
+- **解密核心抽离为 `lib/decrypt.js`** 并新增单元测试（`npm test`，含 120MB 边界场景）。
 
 ### v2.0.0 (2025-10-17)
 - 采用 Playwright + RPC 架构
