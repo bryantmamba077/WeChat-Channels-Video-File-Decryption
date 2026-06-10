@@ -122,6 +122,12 @@
 
         /**
          * RPC 方法：解密视频数据
+         *
+         * @deprecated 自 v2.1 起服务端不再调用此方法。XOR 解密已移至 Node.js 端
+         * (server.js 的 decryptBuffer)，避免把整段视频经 CDP 管道传入浏览器而触发
+         * DevTools 协议 100MB 单条消息上限（导致大文件解密时页面崩溃）。
+         * 此处仅为向后兼容保留，浏览器只负责通过 generateKeystream 生成密钥流。
+         *
          * @param {string} encryptedBase64 - Base64 编码的加密视频数据
          * @param {string} keystreamBase64 - Base64 编码的密钥流
          * @returns {string} Base64 编码的解密后数据

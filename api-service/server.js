@@ -13,6 +13,7 @@ const { chromium } = require('playwright');
 const multer = require('multer');
 const cors = require('cors');
 const path = require('path');
+const { KEYSTREAM_SIZE, decryptBuffer, assertMp4 } = require('./lib/decrypt');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -41,6 +42,12 @@ const getWorkerUrl = () => `http://localhost:${PORT}/worker.html`;
 // 页面池配置
 const POOL_SIZE = parseInt(process.env.POOL_SIZE) || 3; // 默认3个并发页面
 let pagePool = null;
+
+// 解密配置（KEYSTREAM_SIZE / decryptBuffer / assertMp4 见 ./lib/decrypt）
+// 密钥流缓存：同一 decode_key 生成的密钥流恒定，可复用以跳过浏览器 WASM 调用
+// 采用简单 LRU（依赖 Map 的插入顺序），上限可通过环境变量配置
+const KEYSTREAM_CACHE_MAX = parseInt(process.env.KEYSTREAM_CACHE_MAX) || 100;
+const keystreamCache = new Map();
 
 /**
  * 页面池管理器 - 支持并发处理
@@ -349,6 +356,51 @@ async function evaluateWithTimeout(pageFunction, arg, timeout = 30000) {
     ]);
 }
 
+// ==================== 密钥流缓存 ====================
+
+/**
+ * 读取密钥流缓存（命中后移到最近使用位置）
+ * @param {string|number} decodeKey
+ * @returns {Buffer|null}
+ */
+function getCachedKeystream(decodeKey) {
+    const key = String(decodeKey);
+    const buf = keystreamCache.get(key);
+    if (!buf) return null;
+    keystreamCache.delete(key);
+    keystreamCache.set(key, buf); // 重新插入到队尾，标记为最近使用
+    return buf;
+}
+
+/**
+ * 写入密钥流缓存，超出上限时淘汰最久未使用项
+ * @param {string|number} decodeKey
+ * @param {Buffer} buffer
+ */
+function setCachedKeystream(decodeKey, buffer) {
+    keystreamCache.set(String(decodeKey), buffer);
+    if (keystreamCache.size > KEYSTREAM_CACHE_MAX) {
+        const oldest = keystreamCache.keys().next().value;
+        keystreamCache.delete(oldest);
+    }
+}
+
+/**
+ * 解析密钥流：优先命中缓存，否则调用浏览器生成并写入缓存
+ * @param {string|number} decodeKey
+ * @param {() => Promise<string>} generate 返回 base64 密钥流的生成函数（浏览器侧）
+ * @returns {Promise<Buffer>} 128KB 密钥流 Buffer
+ */
+async function resolveKeystream(decodeKey, generate) {
+    const cached = getCachedKeystream(decodeKey);
+    if (cached) return cached;
+
+    const keystreamBase64 = await generate();
+    const keystream = Buffer.from(keystreamBase64, 'base64');
+    setCachedKeystream(decodeKey, keystream);
+    return keystream;
+}
+
 /**
  * 初始化 Playwright 浏览器
  */
@@ -412,7 +464,7 @@ app.get('/health', async (req, res) => {
         res.json({
             status: 'ok',
             service: 'wechat-decrypt-api',
-            version: '2.0.0',
+            version: '2.1.0',
             engine: 'playwright',
             wasm: wasmStatus,
             timestamp: new Date().toISOString()
@@ -448,7 +500,7 @@ app.get('/worker.html', (req, res) => {
 app.get('/api/info', (req, res) => {
     res.json({
         service: 'WeChat Channels Video Decryption API',
-        version: '2.0.0',
+        version: '2.1.0',
         engine: 'Playwright + Chromium',
         author: 'Evil0ctal',
         github: 'https://github.com/Evil0ctal/WeChat-Channels-Video-File-Decryption',
@@ -513,7 +565,7 @@ app.post('/api/keystream', async (req, res) => {
                 decode_key,
                 keystream,
                 format,
-                size: 131072,
+                size: KEYSTREAM_SIZE,
                 duration_ms: duration,
                 timestamp: new Date().toISOString()
             };
@@ -548,48 +600,40 @@ app.post('/api/decrypt', upload.single('video'), async (req, res) => {
         console.log(`   decode_key: ${decode_key}`);
         console.log(`   文件: ${videoFile.originalname} (${(videoFile.size / 1024 / 1024).toFixed(2)} MB)`);
 
-        // 根据文件大小动态设置超时时间（基础30秒 + 每MB额外1秒）
-        const fileSizeMB = videoFile.size / 1024 / 1024;
-        const timeout = Math.max(60000, 30000 + fileSizeMB * 1000);
+        const startTime = Date.now();
 
-        // 使用锁机制确保串行处理
-        const result = await withPageLock(async () => {
-            const startTime = Date.now();
+        // 密钥流命中缓存时无需浏览器，直接在 Node.js 端解密
+        const cached = getCachedKeystream(decode_key);
+        let result;
+        if (cached) {
+            console.log('   [1/2] 命中密钥流缓存');
+            console.log('   [2/2] 执行 XOR 解密...');
+            const decrypted = decryptBuffer(videoFile.buffer, cached);
+            assertMp4(decrypted);
+            result = { decrypted, duration: Date.now() - startTime };
+        } else {
+            // 未命中：用锁机制串行调用浏览器生成密钥流，再在 Node.js 端 XOR
+            result = await withPageLock(async () => {
+                // 步骤 1: 生成密钥流（浏览器 WASM，仅 128KB，不经 CDP 传大文件）
+                console.log('   [1/2] 生成密钥流...');
+                const keystream = await resolveKeystream(decode_key, () =>
+                    evaluateWithTimeout(
+                        async (key) => await window.generateKeystream(key),
+                        decode_key,
+                        30000
+                    )
+                );
 
-            // 步骤 1: 生成密钥流
-            console.log('   [1/3] 生成密钥流...');
-            const keystreamBase64 = await evaluateWithTimeout(
-                async (key) => await window.generateKeystream(key),
-                decode_key,
-                30000
-            );
+                // 步骤 2: 在 Node.js 端执行 XOR 解密（规避 CDP 100MB 限制）
+                console.log('   [2/2] 执行 XOR 解密...');
+                const decrypted = decryptBuffer(videoFile.buffer, keystream);
+                assertMp4(decrypted);
 
-            // 步骤 2: 转换视频为 Base64
-            console.log('   [2/3] 编码视频数据...');
-            const encryptedBase64 = videoFile.buffer.toString('base64');
+                return { decrypted, duration: Date.now() - startTime };
+            });
+        }
 
-            // 步骤 3: 在浏览器中执行解密（大文件需要更长超时）
-            console.log('   [3/3] 执行 XOR 解密...');
-            const decryptedBase64 = await evaluateWithTimeout(
-                (params) => window.decryptVideo(params.encrypted, params.keystream),
-                { encrypted: encryptedBase64, keystream: keystreamBase64 },
-                timeout
-            );
-
-            // Base64 → Buffer
-            const decrypted = Buffer.from(decryptedBase64, 'base64');
-
-            // 验证 MP4 签名
-            const ftyp = decrypted.toString('utf8', 4, 8);
-            if (ftyp !== 'ftyp') {
-                throw new Error('解密失败：未找到 MP4 ftyp 签名，请检查 decode_key');
-            }
-
-            const duration = Date.now() - startTime;
-            console.log(`✅ 解密成功，耗时 ${duration}ms`);
-
-            return { decrypted, duration };
-        });
+        console.log(`✅ 解密成功，耗时 ${result.duration}ms`);
 
         // 返回解密后的视频
         res.set({
@@ -633,50 +677,40 @@ app.post('/api/decrypt-concurrent', upload.single('video'), async (req, res) => 
         console.log(`   文件: ${videoFile.originalname} (${(videoFile.size / 1024 / 1024).toFixed(2)} MB)`);
         console.log(`   页面池状态: ${JSON.stringify(pagePool.getStatus())}`);
 
-        // 根据文件大小动态设置超时时间
-        const fileSizeMB = videoFile.size / 1024 / 1024;
-        const timeout = Math.max(60000, 30000 + fileSizeMB * 1000);
+        const startTime = Date.now();
 
-        // 使用页面池执行（支持并发）
-        const result = await withPoolPage(async (pg) => {
-            const startTime = Date.now();
+        // 密钥流命中缓存时无需占用页面，直接在 Node.js 端解密
+        const cached = getCachedKeystream(decode_key);
+        let result;
+        if (cached) {
+            console.log('   [并发] 命中密钥流缓存，跳过页面池');
+            const decrypted = decryptBuffer(videoFile.buffer, cached);
+            assertMp4(decrypted);
+            result = { decrypted, duration: Date.now() - startTime };
+        } else {
+            // 未命中：用页面池生成密钥流（支持并发），再在 Node.js 端 XOR
+            result = await withPoolPage(async (pg) => {
+                // 步骤 1: 生成密钥流（浏览器 WASM，仅 128KB）
+                console.log(`   [页面#${pg._poolIndex}] [1/2] 生成密钥流...`);
+                const keystream = await resolveKeystream(decode_key, () =>
+                    evaluateWithTimeoutOnPage(
+                        pg,
+                        async (key) => await window.generateKeystream(key),
+                        decode_key,
+                        30000
+                    )
+                );
 
-            // 步骤 1: 生成密钥流
-            console.log(`   [页面#${pg._poolIndex}] [1/3] 生成密钥流...`);
-            const keystreamBase64 = await evaluateWithTimeoutOnPage(
-                pg,
-                async (key) => await window.generateKeystream(key),
-                decode_key,
-                30000
-            );
+                // 步骤 2: 在 Node.js 端执行 XOR 解密（规避 CDP 100MB 限制）
+                console.log(`   [页面#${pg._poolIndex}] [2/2] 执行 XOR 解密...`);
+                const decrypted = decryptBuffer(videoFile.buffer, keystream);
+                assertMp4(decrypted);
 
-            // 步骤 2: 转换视频为 Base64
-            console.log(`   [页面#${pg._poolIndex}] [2/3] 编码视频数据...`);
-            const encryptedBase64 = videoFile.buffer.toString('base64');
+                return { decrypted, duration: Date.now() - startTime };
+            });
+        }
 
-            // 步骤 3: 在浏览器中执行解密
-            console.log(`   [页面#${pg._poolIndex}] [3/3] 执行 XOR 解密...`);
-            const decryptedBase64 = await evaluateWithTimeoutOnPage(
-                pg,
-                (params) => window.decryptVideo(params.encrypted, params.keystream),
-                { encrypted: encryptedBase64, keystream: keystreamBase64 },
-                timeout
-            );
-
-            // Base64 → Buffer
-            const decrypted = Buffer.from(decryptedBase64, 'base64');
-
-            // 验证 MP4 签名
-            const ftyp = decrypted.toString('utf8', 4, 8);
-            if (ftyp !== 'ftyp') {
-                throw new Error('解密失败：未找到 MP4 ftyp 签名，请检查 decode_key');
-            }
-
-            const duration = Date.now() - startTime;
-            console.log(`✅ [页面#${pg._poolIndex}] 解密成功，耗时 ${duration}ms`);
-
-            return { decrypted, duration };
-        });
+        console.log(`✅ [并发] 解密成功，耗时 ${result.duration}ms`);
 
         // 返回解密后的视频
         res.set({

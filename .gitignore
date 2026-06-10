@@ -205,3 +205,8 @@ cython_debug/
 marimo/_static/
 marimo/_lsp/
 __marimo__/
+/todo/
+
+# api-service 为 Node.js 子项目，其源码目录不应被 Python 模板的 lib/ 规则忽略
+!api-service/lib/
+!api-service/lib/**
