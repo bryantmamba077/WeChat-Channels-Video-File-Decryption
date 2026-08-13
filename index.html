@@ -8,24 +8,19 @@
     <title>微信视频号解密工具 - 在线解密 WeChat Channels Video | Isaac64 WASM</title>
     <meta name="description" content="免费在线微信视频号视频解密工具，基于 Isaac64 PRNG 算法和官方 WASM 模块，支持浏览器内一键解密，无需上传，保护隐私。WeChat Channels Video Decryption Tool.">
     <meta name="keywords" content="微信视频号,视频解密,WeChat Channels,Isaac64,WASM,在线解密工具,视频号下载,微信视频解密">
-    <meta name="author" content="Evil0ctal">
     <meta name="robots" content="index, follow">
 
     <!-- Open Graph / Facebook -->
     <meta property="og:type" content="website">
-    <meta property="og:url" content="https://evil0ctal.github.io/WeChat-Channels-Video-File-Decryption/">
     <meta property="og:title" content="微信视频号解密工具 - 在线解密 WeChat Channels Video">
     <meta property="og:description" content="免费在线微信视频号视频解密工具，基于 Isaac64 算法，支持浏览器内一键解密，保护隐私安全">
-    <meta property="og:image" content="https://evil0ctal.github.io/WeChat-Channels-Video-File-Decryption/preview.png">
 
     <!-- Twitter -->
     <meta property="twitter:card" content="summary_large_image">
-    <meta property="twitter:url" content="https://evil0ctal.github.io/WeChat-Channels-Video-File-Decryption/">
     <meta property="twitter:title" content="微信视频号解密工具">
     <meta property="twitter:description" content="免费在线微信视频号视频解密工具">
 
     <!-- Canonical URL -->
-    <link rel="canonical" href="https://evil0ctal.github.io/WeChat-Channels-Video-File-Decryption/">
 
     <!-- 结构化数据 (Schema.org) -->
     <script type="application/ld+json">
@@ -39,11 +34,6 @@
         "@type": "Offer",
         "price": "0",
         "priceCurrency": "CNY"
-      },
-      "author": {
-        "@type": "Person",
-        "name": "Evil0ctal",
-        "url": "https://github.com/Evil0ctal"
       },
       "description": "基于 Isaac64 PRNG 算法的微信视频号加密视频在线解密工具",
       "softwareVersion": "2.0",
@@ -814,95 +804,6 @@
                 <h2>操作日志</h2>
                 <div id="output"></div>
             </div>
-
-            <!-- 技术细节 -->
-            <div class="section">
-                <div class="tech-details">
-                    <h3>🔧 技术细节</h3>
-                    <ul>
-                        <li><strong>加密算法</strong>：Isaac64 PRNG（密码学安全的伪随机数生成器）</li>
-                        <li><strong>实现方式</strong>：使用微信官方 WASM 模块（<code>wasm_video_decode.wasm</code>）</li>
-                        <li><strong>加密范围</strong>：仅加密视频前 131,072 bytes（128 KB）</li>
-                        <li><strong>解密方式</strong>：XOR 运算（<code>decrypted = encrypted ^ keystream</code>）</li>
-                        <li><strong>关键步骤</strong>：密钥流必须经过 <code>reverse()</code> 操作</li>
-                        <li><strong>隐私保护</strong>：所有操作在浏览器本地完成，不上传任何数据</li>
-                    </ul>
-                </div>
-            </div>
-
-            <!-- API 服务推广 -->
-            <div class="section">
-                <div class="api-service-promo">
-                    <div class="api-header">
-                        <h3>🚀 支持 API 服务调用</h3>
-                        <p>批量处理、自动化解密、服务器端部署 - 满足您的专业需求</p>
-                    </div>
-
-                    <div class="api-features">
-                        <div class="api-feature-item">
-                            <div class="feature-icon">⚡</div>
-                            <div class="feature-content">
-                                <h4>高性能 API</h4>
-                                <p>基于 Playwright + WASM，完美兼容微信官方加密算法</p>
-                            </div>
-                        </div>
-                        <div class="api-feature-item">
-                            <div class="feature-icon">🐳</div>
-                            <div class="feature-content">
-                                <h4>Docker 一键部署</h4>
-                                <p>开箱即用，支持 ARM64/AMD64 多架构</p>
-                            </div>
-                        </div>
-                        <div class="api-feature-item">
-                            <div class="feature-icon">📡</div>
-                            <div class="feature-content">
-                                <h4>RESTful API</h4>
-                                <p>简洁易用的 HTTP 接口，支持批量解密和密钥流生成</p>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="docker-deploy">
-                        <h4>🐳 一键部署（使用 Docker Hub 镜像）</h4>
-                        <div class="code-block">docker run -d --name wechat-decrypt-api -p 3000:3000 evil0ctal/wechat-decrypt-api:latest</div>
-                        <p class="deploy-hint">💡 访问 <code>http://localhost:3000</code> 查看 API 文档和服务状态</p>
-                    </div>
-
-                    <div class="api-endpoints">
-                        <h4>📚 API 端点</h4>
-                        <div class="endpoint-list">
-                            <div class="endpoint-item">
-                                <span class="method method-get">GET</span>
-                                <span class="path">/health</span>
-                                <span class="desc">健康检查</span>
-                            </div>
-                            <div class="endpoint-item">
-                                <span class="method method-post">POST</span>
-                                <span class="path">/api/keystream</span>
-                                <span class="desc">生成密钥流</span>
-                            </div>
-                            <div class="endpoint-item">
-                                <span class="method method-post">POST</span>
-                                <span class="path">/api/decrypt</span>
-                                <span class="desc">完整视频解密</span>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="api-links">
-                        <a href="https://github.com/Evil0ctal/WeChat-Channels-Video-File-Decryption/tree/main/api-service" target="_blank" class="api-link">
-                            📖 查看 API 文档
-                        </a>
-                        <a href="https://hub.docker.com/r/evil0ctal/wechat-decrypt-api" target="_blank" class="api-link">
-                            🐳 Docker Hub
-                        </a>
-                        <a href="https://github.com/Evil0ctal/WeChat-Channels-Video-File-Decryption" target="_blank" class="api-link">
-                            ⭐ GitHub 仓库
-                        </a>
-                    </div>
-                </div>
-            </div>
-
             
     </div>
 
@@ -953,23 +854,6 @@
 1. 本地 WASM 文件缺失（wechat_files/ 目录）
 2. 微信 CDN 网络访问受限
 3. 浏览器阻止了脚本加载（检查控制台）
-
-<span class="info">解决方案：</span>
-
-<span class="success">方案 1：下载本地文件（推荐 - 速度最快）</span>
-从项目仓库下载 wechat_files/ 目录到与 index.html 同级：
-• wasm_video_decode.js
-• wasm_video_decode.wasm
-GitHub: https://github.com/Evil0ctal/WeChat-Channels-Video-File-Decryption
-
-<span class="success">方案 2：使用微信 CDN</span>
-如果本地文件缺失，会自动尝试使用微信 CDN (v1.2.46)：
-• JS: https://aladin.wxqcloud.qq.com/aladin/ffmepeg/video-decode/1.2.46/wasm_video_decode.js
-• WASM: https://aladin.wxqcloud.qq.com/aladin/ffmepeg/video-decode/1.2.46/wasm_video_decode.wasm
-
-<span class="info">💡 提示：</span>
-本地文件加载速度更快，建议优先使用本地部署。
-中国大陆用户如果本地文件不可用，微信 CDN 是可靠的备选方案。
                 `.trim();
             }
         }
