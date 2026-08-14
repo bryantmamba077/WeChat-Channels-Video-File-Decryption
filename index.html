@@ -773,6 +773,12 @@
         #videoUrl { width: 100%; padding: 14px 15px; border: 1px solid rgba(166,184,223,.24); border-radius: 10px; color: #eff6ff; background: rgba(5,10,21,.42); font-family: inherit; font-size: 14px; }
         #videoUrl:focus { outline: 0; border-color: var(--accent); box-shadow: 0 0 0 3px rgba(97,230,184,.11); }
         .url-hint { margin: 10px 0 0; color: var(--muted); font-size: 12px; line-height: 1.65; }
+        .extension-notice { display: flex; align-items: center; gap: 9px; margin-top: 14px; padding: 10px 12px; border: 1px solid rgba(255, 196, 91, .25); border-radius: 9px; color: #e8ce91; background: rgba(224, 167, 50, .08); font-size: 12px; line-height: 1.45; }
+        .extension-notice::before { width: 7px; height: 7px; flex: 0 0 7px; border-radius: 50%; background: currentColor; content: ''; }
+        .extension-notice.ready { border-color: rgba(97,230,184,.25); color: var(--accent); background: rgba(97,230,184,.08); }
+        .extension-guide { margin-top: 10px; color: var(--muted); font-size: 12px; line-height: 1.65; }
+        .extension-guide summary { cursor: pointer; color: #bfcae0; }
+        .extension-guide ol { margin: 8px 0 0; padding-left: 20px; }
         .button-group { gap: 10px; }
         button { padding: 11px 16px; border-radius: 10px; font-size: 13px; }
         button:hover:not(:disabled) { transform: translateY(-1px); }
@@ -878,6 +884,15 @@
                         <label class="url-label" for="videoUrl">加密视频 URL</label>
                         <input type="url" id="videoUrl" placeholder="https://example.com/encrypted-video.mp4" autocomplete="url">
                         <p class="url-hint">点击“开始解密”后，视频将直接下载至浏览器内存并立即解密，不会保存到本地磁盘。该链接需允许跨域访问（CORS）。</p>
+                        <div id="extensionNotice" class="extension-notice" role="status"></div>
+                        <details id="extensionGuide" class="extension-guide">
+                            <summary>查看 Chrome 扩展安装步骤</summary>
+                            <ol>
+                                <li>在地址栏打开 <code>chrome://extensions</code>，开启“开发者模式”。</li>
+                                <li>点击“加载已解压的扩展程序”，选择 <code>chrome-extension</code> 文件夹。</li>
+                                <li>重新加载扩展并刷新本页面。</li>
+                            </ol>
+                        </details>
                     </div>
                     <div id="fileInfo" class="file-info" style="display: none;"></div>
                 </div>
@@ -1105,7 +1120,19 @@
             });
             document.getElementById('file-source-panel').classList.toggle('active', source === 'file');
             document.getElementById('url-source-panel').classList.toggle('active', source === 'url');
+            updateExtensionNotice();
             updateDecryptButton();
+        }
+
+        function updateExtensionNotice() {
+            const notice = document.getElementById('extensionNotice');
+            const guide = document.getElementById('extensionGuide');
+            const extensionReady = document.documentElement.dataset.wcVideoExtension === 'ready';
+            notice.classList.toggle('ready', extensionReady);
+            notice.textContent = extensionReady
+                ? 'Chrome 扩展已就绪：可自动读取受跨域限制的视频 URL。'
+                : '未检测到 Chrome 扩展：仅支持允许跨域访问的视频 URL。';
+            guide.hidden = extensionReady;
         }
 
         function updateDecryptButton() {
@@ -1748,6 +1775,7 @@
             // 监听 decode key 输入
             document.getElementById('decodeKeyFull').addEventListener('input', updateDecryptButton);
             document.getElementById('videoUrl').addEventListener('input', updateDecryptButton);
+            updateExtensionNotice();
         });
     </script>
 </body>
