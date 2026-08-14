@@ -1116,6 +1116,44 @@
             document.getElementById('decryptBtn').disabled = !(hasKey && hasSource);
         }
 
+        /** 通过已安装的 Chrome 扩展分块读取跨域视频，结果仍只保存在页面内存。 */
+        function fetchVideoViaExtension(url) {
+            if (document.documentElement.dataset.wcVideoExtension !== 'ready') {
+                return Promise.reject(new Error('未检测到 WC 视频 URL 解密助手扩展'));
+            }
+
+            return new Promise((resolve, reject) => {
+                const requestId = crypto.randomUUID ? crypto.randomUUID() : `${Date.now()}-${Math.random()}`;
+                const chunks = [];
+                let mimeType = 'video/mp4';
+                const timeout = setTimeout(() => finish(new Error('扩展下载超时，请确认扩展已启用后刷新页面')), 300000);
+
+                function finish(error, blob) {
+                    clearTimeout(timeout);
+                    window.removeEventListener('message', onMessage);
+                    if (error) reject(error);
+                    else resolve(blob);
+                }
+
+                function onMessage(event) {
+                    const message = event.data;
+                    if (event.source !== window || event.origin !== window.location.origin || message?.channel !== 'wc-video-decrypt' || message.requestId !== requestId) return;
+                    if (message.type === 'video-start') {
+                        mimeType = message.mimeType || mimeType;
+                    } else if (message.type === 'video-chunk') {
+                        chunks.push(message.chunk);
+                    } else if (message.type === 'video-complete') {
+                        finish(null, new Blob(chunks, { type: mimeType }));
+                    } else if (message.type === 'video-error') {
+                        finish(new Error(message.message || '扩展下载失败'));
+                    }
+                }
+
+                window.addEventListener('message', onMessage);
+                window.postMessage({ channel: 'wc-video-decrypt', type: 'fetch-video', requestId, url }, window.location.origin);
+            });
+        }
+
         /**
          * 将远程视频读取为内存中的 File 对象，不产生本地磁盘文件。
          */
@@ -1132,12 +1170,19 @@
             }
 
             updateProgress(5, '正在从 URL 读取加密视频...');
-            const response = await fetch(videoUrl.href, { cache: 'no-store', credentials: 'omit' });
-            if (!response.ok) {
-                throw new Error(`视频下载失败（HTTP ${response.status}）`);
+            let blob;
+            try {
+                const response = await fetch(videoUrl.href, { cache: 'no-store', credentials: 'omit' });
+                if (!response.ok) throw new Error(`视频下载失败（HTTP ${response.status}）`);
+                blob = await response.blob();
+            } catch (fetchError) {
+                try {
+                    blob = await fetchVideoViaExtension(videoUrl.href);
+                    log('<span class="info">🔌 已通过 Chrome 扩展读取跨域视频</span>');
+                } catch (extensionError) {
+                    throw new Error(`无法读取视频 URL：${extensionError.message}。原始请求错误：${fetchError.message}`);
+                }
             }
-
-            const blob = await response.blob();
             if (!blob.size) {
                 throw new Error('下载的视频为空');
             }
