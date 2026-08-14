@@ -5,15 +5,15 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
     <!-- SEO 优化 -->
-    <title>微信视频号解密工具 - 在线解密 WeChat Channels Video | Isaac64 WASM</title>
-    <meta name="description" content="免费在线微信视频号视频解密工具，基于 Isaac64 PRNG 算法和官方 WASM 模块，支持浏览器内一键解密，无需上传，保护隐私。WeChat Channels Video Decryption Tool.">
+    <title>微信视频号解密工具 - 在线解密</title>
+    <meta name="description" content="免费在线微信视频号视频解密工具，支持浏览器内一键解密，无需上传，保护隐私。支持URL一键解密。WeChat Channels Video Decryption Tool.">
     <meta name="keywords" content="微信视频号,视频解密,WeChat Channels,Isaac64,WASM,在线解密工具,视频号下载,微信视频解密">
     <meta name="robots" content="index, follow">
 
     <!-- Open Graph / Facebook -->
     <meta property="og:type" content="website">
     <meta property="og:title" content="微信视频号解密工具 - 在线解密 WeChat Channels Video">
-    <meta property="og:description" content="免费在线微信视频号视频解密工具，基于 Isaac64 算法，支持浏览器内一键解密，保护隐私安全">
+    <meta property="og:description" content="免费在线微信视频号视频解密工具，支持浏览器内一键解密，保护隐私安全">
 
     <!-- Twitter -->
     <meta property="twitter:card" content="summary_large_image">
@@ -35,7 +35,7 @@
         "price": "0",
         "priceCurrency": "CNY"
       },
-      "description": "基于 Isaac64 PRNG 算法的微信视频号加密视频在线解密工具",
+      "description": "微信视频号加密视频在线解密工具",
       "softwareVersion": "2.0",
       "datePublished": "2025-01-15"
     }
@@ -829,29 +829,29 @@
             </div>
             <div class="work-area">
             <!-- 标签页 -->
-            <div class="tabs">
-                <!--<button class="tab active" onclick="switchTab('decrypt')">
+             <!--<div class="tabs">
+               <button class="tab active" onclick="switchTab('decrypt')">
                     🎬 一键解密
-                </button>-->
-                <!-- <button class="tab" onclick="switchTab('keystream')">
+                </button>
+               <button class="tab" onclick="switchTab('keystream')">
                     🔑 仅生成密钥流
-                </button>-->
-            </div>
+                </button>
+            </div>-->
 
             <!-- 一键解密标签页 -->
             <div id="decrypt-tab" class="tab-content active workflow">
                 <div class="section">
                     <h2>步骤 1：输入解密密钥</h2>
                     <div class="input-group">
-                        <label for="decodeKeyFull">Decode Key（从 API 响应中获取）</label>
+                        <label for="decodeKeyFull">Decode Key（从 <a style="color: var(--accent);" href="https://getoneapi.com" target="_blank" rel="noopener">API</a> 响应中获取decode_key字段）</label>
                         <input
                             type="text"
                             id="decodeKeyFull"
-                            placeholder="例如：2136343393"
+                            placeholder="例如：907817674"
                             value=""
                         >
                         <div style="margin-top: 8px; padding: 10px; background: #fff3cd; border-left: 4px solid #ffc107; border-radius: 4px; font-size: 13px; color: #856404;">
-                            <strong>⚠️ 重要提示：</strong> 微信接口每次请求都会返回新的加密文件链接和 decode_key，即使是同一个视频。请确保使用的 decode_key 与下载的加密视频文件是同一次 API 响应中获取的，否则解密将会失败。
+                            <strong>⚠️ 重要提示：</strong> 微信接口每次请求都会返回新的加密文件链接和 decode_key，即使是同一个视频每次请求都不相同。请确保使用的 decode_key 与 下载的加密视频文件/视频full_url 是同一次 API 响应中获取的，否则解密将会失败。
                         </div>
                     </div>
                 </div>
@@ -881,15 +881,16 @@
                         >
                     </div>
                     <div id="url-source-panel" class="source-panel">
-                        <label class="url-label" for="videoUrl">加密视频 URL</label>
-                        <input type="url" id="videoUrl" placeholder="https://example.com/encrypted-video.mp4" autocomplete="url">
-                        <p class="url-hint">点击“开始解密”后，视频将直接下载至浏览器内存并立即解密，不会保存到本地磁盘。该链接需允许跨域访问（CORS）。</p>
+                        <label class="url-label" for="videoUrl">加密视频 URL（从 <a style="color: var(--accent);" href="https://getoneapi.com" target="_blank" rel="noopener">API</a> 响应中获取full_url字段）</label>
+                        <input type="url" id="videoUrl" placeholder="例如：http://wxapp.tc.qq.com/251/20302/stodownload?encfilekey=Cvvj5Ix3eewQsFvYyicia1J0M1IfugibEfdkiaCfA4lpnDjDMkEs7A24omUIUoiaFIcpA8MibIIpDEIGFCiaicY4omShPbnZPmKFjFsAH6vqWwnUGA6cHLLOlMYeZQ&hy=SZ&idx=1&m=ceb3b6a2408988f80a3f46f810725038&uzid=7a1ca&token=ic1n0xDG6awibsh9ic3aL0dgVk9ziaZN2GicYddcD4MfYbQPo3H9X69kQ2Y2ZOIQviaecNN0Ya0MJsJ24mNt1Wibq0YZcTibVxqCibGX1PwP1dw1sOFaSROcEBP8toEzuDSicOSx1sMAsFEWh1icopDsicfEqMFiaTHj7Sic3XoukOicL1ae60XrjjJtnfsmdtAvvuhnfq000qOsjtjCPlcBtc7cMZguAgPdhz3iaO3ibrjoAyDMMMibSLdHQ&basedata=CAMSBnhXVDExMyI2CgoKBnhXVDExMxAACgoKBnhXVDExMhABCgoKBnhXVDExMRAACgcKA3hBMBAACgcKA3hBMhAAOgIIAkIw_BP4U07GK-6igvrPTnJPOQ2RLYVo_ABRPIHWAxpZv-tGFShIsDGpJMIV-JnDIu85SO3O-9MG&sign=0h0wVAQIdN0LyJMJqvVFXFhCQe0jAGLXTlTKMPyU029nEmo7jQNHgIjBjI4-nOhz0nAwuqkduna9wbC_DFOkQg&extg=1074b00&svrbypass=AAuL%2FQsFAAABAAAAAAC859lq0zlGQMaAbed%2BahAAAADnaHZTnGbFfAj9RgZXfw6VGiO0FCj00BGi%2B4l9se4XzscfMvXXNBHlsFOZwjk3tlSszo2qqhzqIKc%3D&svrnonce=1786701677" autocomplete="url">
+                        <p class="url-hint">点击“开始解密”后，视频将直接下载至浏览器内存并立即解密，不会保存到本地磁盘。</p>
                         <div id="extensionNotice" class="extension-notice" role="status"></div>
                         <details id="extensionGuide" class="extension-guide">
                             <summary>查看 Chrome 扩展安装步骤</summary>
                             <ol>
+                                <li><a style="color: var(--accent);" href="https://wc.getoneapi.com/wc-assistant.zip" target="_blank" rel="noopener">下载扩展安装包</a>并解压。</li>
                                 <li>在地址栏打开 <code>chrome://extensions</code>，开启“开发者模式”。</li>
-                                <li>点击“加载已解压的扩展程序”，选择 <code>chrome-extension</code> 文件夹。</li>
+                                <li>点击“加载已解压的扩展程序”，选择解压后的扩展文件夹 wc-assistant 。</li>
                                 <li>重新加载扩展并刷新本页面。</li>
                             </ol>
                         </details>
@@ -937,7 +938,7 @@
                             value=""
                         >
                         <div style="margin-top: 8px; padding: 10px; background: #fff3cd; border-left: 4px solid #ffc107; border-radius: 4px; font-size: 13px; color: #856404;">
-                            <strong>⚠️ 重要提示：</strong> 微信接口每次请求都会返回新的加密文件链接和 decode_key，即使是同一个视频。请确保使用的 decode_key 与下载的加密视频文件是同一次 API 响应中获取的，否则解密将会失败。
+                            <strong>⚠️ 重要提示：</strong> 微信接口每次请求都会返回新的加密文件链接和 decode_key，即使是同一个视频每次请求都不相同。请确保使用的 decode_key 与下载的加密视频文件是同一次 API 响应中获取的，否则解密将会失败。
                         </div>
                     </div>
                     <div class="button-group">
@@ -1129,9 +1130,10 @@
             const guide = document.getElementById('extensionGuide');
             const extensionReady = document.documentElement.dataset.wcVideoExtension === 'ready';
             notice.classList.toggle('ready', extensionReady);
+            document.getElementById('videoUrl').disabled = !extensionReady;
             notice.textContent = extensionReady
-                ? 'Chrome 扩展已就绪：可自动读取受跨域限制的视频 URL。'
-                : '未检测到 Chrome 扩展：仅支持允许跨域访问的视频 URL。';
+                ? 'Chrome 扩展程序已就绪！'
+                : '未检测到 Chrome 扩展程序！需使用支持 Chrome 扩展的浏览器安装扩展程序，推荐使用Chrome浏览器';
             guide.hidden = extensionReady;
         }
 
@@ -1146,14 +1148,14 @@
         /** 通过已安装的 Chrome 扩展分块读取跨域视频，结果仍只保存在页面内存。 */
         function fetchVideoViaExtension(url) {
             if (document.documentElement.dataset.wcVideoExtension !== 'ready') {
-                return Promise.reject(new Error('未检测到 WC 视频 URL 解密助手扩展'));
+                return Promise.reject(new Error('未检测到 Chrome 扩展程序，请先安装！'));
             }
 
             return new Promise((resolve, reject) => {
                 const requestId = crypto.randomUUID ? crypto.randomUUID() : `${Date.now()}-${Math.random()}`;
                 const chunks = [];
                 let mimeType = 'video/mp4';
-                const timeout = setTimeout(() => finish(new Error('扩展下载超时，请确认扩展已启用后刷新页面')), 300000);
+                const timeout = setTimeout(() => finish(new Error('扩展下载超时，请确认Chrome扩展程序已启用后刷新页面')), 300000);
 
                 function finish(error, blob) {
                     clearTimeout(timeout);
@@ -1205,7 +1207,7 @@
             } catch (fetchError) {
                 try {
                     blob = await fetchVideoViaExtension(videoUrl.href);
-                    log('<span class="info">🔌 已通过 Chrome 扩展读取跨域视频</span>');
+                    log('<span class="info">🔌 已通过 Chrome 扩展读取视频</span>');
                 } catch (extensionError) {
                     throw new Error(`无法读取视频 URL：${extensionError.message}。原始请求错误：${fetchError.message}`);
                 }
