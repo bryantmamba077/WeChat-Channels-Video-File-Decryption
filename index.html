@@ -680,28 +680,160 @@
                 padding: 12px;
             }
         }
+
+        /* 2026 workspace redesign */
+        :root {
+            --ink: #e8edf9;
+            --muted: #8f9bb3;
+            --line: rgba(166, 184, 223, .16);
+            --panel: rgba(17, 25, 45, .82);
+            --panel-deep: #10182c;
+            --accent: #61e6b8;
+            --accent-2: #7da7ff;
+            --danger: #ff8e9a;
+        }
+
+        body {
+            min-height: 100vh;
+            margin: 0;
+            padding: 32px;
+            color: var(--ink);
+            background: #080d1a;
+            background-image: radial-gradient(circle at 8% 8%, rgba(78, 113, 210, .22), transparent 26rem), radial-gradient(circle at 90% 85%, rgba(34, 180, 139, .13), transparent 30rem), linear-gradient(rgba(133, 157, 211, .035) 1px, transparent 1px), linear-gradient(90deg, rgba(133, 157, 211, .035) 1px, transparent 1px);
+            background-size: auto, auto, 34px 34px, 34px 34px;
+        }
+
+        .container {
+            max-width: 1240px;
+            min-height: calc(100vh - 64px);
+            margin: 0 auto;
+            overflow: hidden;
+            border: 1px solid var(--line);
+            border-radius: 22px;
+            background: rgba(10, 16, 30, .68);
+            box-shadow: 0 30px 90px rgba(0, 0, 0, .42);
+            backdrop-filter: blur(20px);
+        }
+
+        .app-layout { display: grid; grid-template-columns: 300px minmax(0, 1fr); }
+        .header {
+            display: flex;
+            flex-direction: column;
+            align-items: flex-start;
+            justify-content: space-between;
+            gap: 34px;
+            min-height: 100%;
+            padding: 42px 30px 30px;
+            text-align: left;
+            color: var(--ink);
+            background: linear-gradient(160deg, rgba(53, 75, 131, .35), rgba(12, 19, 34, .8) 52%, rgba(18, 88, 74, .2));
+            border-right: 1px solid var(--line);
+        }
+        .product-mark { display: flex; align-items: center; gap: 12px; color: var(--accent); font-size: 12px; font-weight: 750; letter-spacing: .14em; text-transform: uppercase; }
+        .product-mark .mark { display: grid; place-items: center; width: 35px; height: 35px; color: #071119; background: var(--accent); border-radius: 11px; font-size: 18px; box-shadow: 0 0 24px rgba(97, 230, 184, .35); }
+        .header h1 { max-width: 220px; margin: 0; font-size: clamp(28px, 3vw, 38px); line-height: 1.12; letter-spacing: -.05em; }
+        .header p { margin: 13px 0 0; color: var(--muted); font-size: 14px; line-height: 1.75; opacity: 1; }
+        .privacy-card { padding: 16px; border: 1px solid rgba(97, 230, 184, .2); border-radius: 14px; background: rgba(97, 230, 184, .07); }
+        .privacy-card strong { display: block; margin-bottom: 4px; color: var(--accent); font-size: 13px; }
+        .privacy-card span { color: #adbacf; font-size: 12px; line-height: 1.55; }
+
+        .content { padding: 0; }
+        .workspace-top { display: flex; align-items: center; justify-content: space-between; padding: 26px 38px; border-bottom: 1px solid var(--line); }
+        .workspace-top .eyebrow { color: var(--muted); font-size: 12px; letter-spacing: .1em; text-transform: uppercase; }
+        .status-pill { display: inline-flex; align-items: center; gap: 8px; padding: 7px 11px; border: 1px solid rgba(97,230,184,.2); border-radius: 99px; color: var(--accent); background: rgba(97,230,184,.07); font-size: 12px; }
+        .status-pill::before { width: 7px; height: 7px; border-radius: 50%; background: currentColor; content: ''; box-shadow: 0 0 10px currentColor; }
+        .work-area { padding: 34px 38px 38px; }
+        .tabs { display: inline-flex; margin: 0 0 14px; padding: 4px; border: 1px solid var(--line); border-radius: 12px; background: rgba(255,255,255,.035); }
+        .tab { padding: 9px 16px; border: 0; border-radius: 8px; color: var(--muted); background: transparent; font-size: 13px; }
+        .tab:hover, .tab.active { color: #091018; background: var(--accent); box-shadow: none; transform: none; }
+        .tab.active { border-bottom: 0; font-weight: 700; }
+        .tab-content.active { display: block; }
+        .workflow { display: grid; gap: 20px; }
+        .tab-content.active.workflow { display: grid; }
+        .section { position: relative; margin: 0; padding: 24px; border: 1px solid var(--line); border-radius: 16px; background: var(--panel); }
+        .section h2 { display: flex; align-items: center; gap: 11px; margin: 0 0 18px; padding: 0; border: 0; color: var(--ink); font-size: 15px; }
+        .section h2::before { display: grid; place-items: center; width: 22px; height: 22px; border-radius: 7px; color: var(--accent); background: rgba(97,230,184,.12); content: '✦'; font-size: 12px; }
+        .input-group { margin: 0; }
+        .input-group label { margin-bottom: 8px; color: #bfcae0; font-size: 12px; font-weight: 600; }
+        .input-group input[type="text"] { width: 100%; padding: 14px 15px; border: 1px solid rgba(166,184,223,.24); border-radius: 10px; color: #eff6ff; background: rgba(5, 10, 21, .42); font-size: 15px; }
+        .input-group input:focus { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(97,230,184,.11); }
+        .input-group > div[style] { margin-top: 12px !important; padding: 12px 14px !important; border: 1px solid rgba(255, 199, 87, .2) !important; border-left: 1px solid rgba(255, 199, 87, .35) !important; border-radius: 10px !important; color: #d9c998 !important; background: rgba(224, 167, 50, .08) !important; font-size: 12px !important; line-height: 1.65; }
+        .file-upload-area { padding: 30px; border: 1px dashed rgba(125,167,255,.55); border-radius: 12px; color: var(--ink); background: linear-gradient(135deg, rgba(125,167,255,.09), rgba(97,230,184,.045)); }
+        .file-upload-area:hover { border-color: var(--accent); background: rgba(97,230,184,.08); }
+        .file-upload-area.drag-over { color: var(--ink); background: rgba(97,230,184,.15); }
+        .file-upload-area div[style*="color"] { color: var(--muted) !important; }
+        .file-info { border: 1px solid rgba(97,230,184,.22); border-radius: 10px; color: var(--accent); background: rgba(97,230,184,.08); }
+        .source-tabs { display: flex; gap: 8px; margin-bottom: 16px; padding-bottom: 14px; border-bottom: 1px solid var(--line); }
+        .source-tab { padding: 8px 12px; border: 1px solid transparent; border-radius: 8px; color: var(--muted); background: transparent; font-size: 12px; }
+        .source-tab:hover { color: var(--ink); background: rgba(255,255,255,.05); box-shadow: none; }
+        .source-tab.active { color: var(--accent); border-color: rgba(97,230,184,.25); background: rgba(97,230,184,.08); }
+        .source-panel { display: none; }
+        .source-panel.active { display: block; }
+        .url-label { display: block; margin-bottom: 8px; color: #bfcae0; font-size: 12px; font-weight: 600; }
+        #videoUrl { width: 100%; padding: 14px 15px; border: 1px solid rgba(166,184,223,.24); border-radius: 10px; color: #eff6ff; background: rgba(5,10,21,.42); font-family: inherit; font-size: 14px; }
+        #videoUrl:focus { outline: 0; border-color: var(--accent); box-shadow: 0 0 0 3px rgba(97,230,184,.11); }
+        .url-hint { margin: 10px 0 0; color: var(--muted); font-size: 12px; line-height: 1.65; }
+        .button-group { gap: 10px; }
+        button { padding: 11px 16px; border-radius: 10px; font-size: 13px; }
+        button:hover:not(:disabled) { transform: translateY(-1px); }
+        .btn-primary { color: #071119; background: var(--accent); }
+        .btn-success { color: #eff6ff; background: #315bba; }
+        .btn-secondary { color: #c6d0e2; background: rgba(181, 197, 225, .11); }
+        .progress-container { margin: 18px 0 0; padding: 15px; border: 1px solid var(--line); border-radius: 12px; background: rgba(4, 9, 20, .3); }
+        .progress-bar { height: 10px; background: #202b40; }
+        .progress-fill { background: linear-gradient(90deg, var(--accent), #7da7ff); font-size: 10px; }
+        .progress-text { color: var(--muted); }
+        .output-section { margin-top: 22px; }
+        .sponsor-section { margin-top: 18px; }
+        #output { min-height: 150px; max-height: 340px; padding: 17px; border: 1px solid var(--line); border-radius: 12px; color: #bfcae0; background: #080e1c; font-size: 12px; }
+        #output:empty::before { content: '等待任务开始…'; color: #60708e; }
+        .sponsor { padding: 19px 22px; border: 1px solid rgba(125,167,255,.22); border-radius: 14px; color: #bfcce3; text-align: left; background: linear-gradient(100deg, rgba(49,91,186,.2), rgba(18,34,67,.45)); }
+        .sponsor h3 { color: #eff6ff; font-size: 15px; }
+        .sponsor a { color: var(--accent); }
+        .sponsor p { font-size: 12px; line-height: 1.55; }
+        @media (max-width: 820px) {
+            body { padding: 14px; }
+            .container { min-height: calc(100vh - 28px); border-radius: 16px; }
+            .app-layout { grid-template-columns: 1fr; }
+            .header { min-height: auto; padding: 26px; border-right: 0; border-bottom: 1px solid var(--line); }
+            .header h1 { max-width: none; }
+            .privacy-card { display: none; }
+            .workspace-top { padding: 18px 22px; }
+            .work-area { padding: 22px; }
+        }
     </style>
 </head>
 <body>
     <div class="container">
+        <div class="app-layout">
         <header class="header">
-            <h1>🔐 微信视频号解密工具</h1>
-            <p>基于 Isaac64 WASM 的在线解密工具 - 完全浏览器内处理，保护隐私</p>
+            <div>
+                <div class="product-mark"><span class="mark">⌁</span> Local video lab</div>
+                <br>
+                <h1>视频解密<br>工作台</h1>
+                <p>使用离线模块在本地浏览器中完成解密，文件、密钥不会离开你的设备，保护隐私。</p>
+            </div>
+            
         </header>
 
         <main class="content">
+            <div class="workspace-top">
+                <span class="eyebrow">Decrypt workspace / v2.0</span>
+                <span class="status-pill">WASM initializing</span>
+            </div>
+            <div class="work-area">
             <!-- 标签页 -->
             <div class="tabs">
-                <button class="tab active" onclick="switchTab('decrypt')">
+                <!--<button class="tab active" onclick="switchTab('decrypt')">
                     🎬 一键解密
-                </button>
+                </button>-->
                 <!-- <button class="tab" onclick="switchTab('keystream')">
                     🔑 仅生成密钥流
                 </button>-->
             </div>
 
             <!-- 一键解密标签页 -->
-            <div id="decrypt-tab" class="tab-content active">
+            <div id="decrypt-tab" class="tab-content active workflow">
                 <div class="section">
                     <h2>步骤 1：输入解密密钥</h2>
                     <div class="input-group">
@@ -720,22 +852,33 @@
 
                 <div class="section">
                     <h2>步骤 2：选择加密视频</h2>
-                    <div class="file-upload-area" id="dropArea" onclick="document.getElementById('videoInput').click()">
-                        <div style="font-size: 48px; margin-bottom: 10px;">📹</div>
-                        <div style="font-size: 16px; font-weight: 500; margin-bottom: 5px;">
-                            点击选择或拖放加密视频文件
-                        </div>
-                        <div style="font-size: 13px; color: #666;">
-                            支持 .mp4 格式，文件不会上传到服务器
-                        </div>
+                    <div class="source-tabs" role="tablist" aria-label="视频来源">
+                        <button type="button" class="source-tab active" onclick="switchVideoSource('file')">选择加密视频文件</button>
+                        <button type="button" class="source-tab" onclick="switchVideoSource('url')">输入加密视频 URL</button>
                     </div>
-                    <input
-                        type="file"
-                        id="videoInput"
-                        accept="video/*"
-                        style="display: none;"
-                        onchange="handleFileSelect(event)"
-                    >
+                    <div id="file-source-panel" class="source-panel active">
+                        <div class="file-upload-area" id="dropArea" onclick="document.getElementById('videoInput').click()">
+                            <div style="font-size: 48px; margin-bottom: 10px;">📹</div>
+                            <div style="font-size: 16px; font-weight: 500; margin-bottom: 5px;">
+                                点击选择或拖放加密视频文件
+                            </div>
+                            <div style="font-size: 13px; color: #666;">
+                                支持 .mp4 格式，文件不会上传到服务器
+                            </div>
+                        </div>
+                        <input
+                            type="file"
+                            id="videoInput"
+                            accept="video/*"
+                            style="display: none;"
+                            onchange="handleFileSelect(event)"
+                        >
+                    </div>
+                    <div id="url-source-panel" class="source-panel">
+                        <label class="url-label" for="videoUrl">加密视频 URL</label>
+                        <input type="url" id="videoUrl" placeholder="https://example.com/encrypted-video.mp4" autocomplete="url">
+                        <p class="url-hint">点击“开始解密”后，视频将直接下载至浏览器内存并立即解密，不会保存到本地磁盘。该链接需允许跨域访问（CORS）。</p>
+                    </div>
                     <div id="fileInfo" class="file-info" style="display: none;"></div>
                 </div>
 
@@ -800,13 +943,13 @@
             </div>
 
             <!-- 操作日志 -->
-            <div class="section">
+            <div class="section output-section">
                 <h2>操作日志</h2>
                 <div id="output"></div>
             </div>
 
             <!-- 赞助商 -->
-            <div class="section">
+            <div class="section sponsor-section">
                 <div class="sponsor">
                     <h3>🚀 项目赞助方</h3>
                     <p>本项目由 <a href="https://getoneapi.com" target="_blank" rel="noopener">OneAPI</a> 赞助支持</p>
@@ -814,7 +957,9 @@
                     <p>支持抖音、快手、小红书、微信公众号、微信视频号、TikTok、Instagram、YouTube 等多平台数据获取与分析</p>
                 </div>
             </div>
-            
+            </div>
+        </main>
+        </div>
     </div>
 
     <!-- WASM 模块配置 -->
@@ -875,6 +1020,7 @@
         let keystreamData = null;
         let encryptedVideoFile = null;
         let decryptedVideoData = null;
+        let videoSource = 'file';
         const KEYSTREAM_SIZE = 131072; // 128 KB
 
         /**
@@ -938,11 +1084,68 @@
             clearOutput();
             encryptedVideoFile = null;
             decryptedVideoData = null;
+            document.getElementById('videoInput').value = '';
+            document.getElementById('videoUrl').value = '';
             document.getElementById('fileInfo').style.display = 'none';
             document.getElementById('decryptBtn').disabled = true;
             document.getElementById('downloadBtn').disabled = true;
             hideProgress();
             log('<span class="info">✅ 已重置所有状态</span>\n');
+        }
+
+        /**
+         * 切换视频来源；两种来源最终都会赋值给 encryptedVideoFile，复用同一解密流程。
+         */
+        function switchVideoSource(source) {
+            videoSource = source;
+            encryptedVideoFile = null;
+            document.getElementById('fileInfo').style.display = 'none';
+            document.querySelectorAll('.source-tab').forEach((tab, index) => {
+                tab.classList.toggle('active', (source === 'file' && index === 0) || (source === 'url' && index === 1));
+            });
+            document.getElementById('file-source-panel').classList.toggle('active', source === 'file');
+            document.getElementById('url-source-panel').classList.toggle('active', source === 'url');
+            updateDecryptButton();
+        }
+
+        function updateDecryptButton() {
+            const hasKey = Boolean(document.getElementById('decodeKeyFull').value.trim());
+            const hasSource = videoSource === 'file'
+                ? Boolean(encryptedVideoFile)
+                : Boolean(document.getElementById('videoUrl').value.trim());
+            document.getElementById('decryptBtn').disabled = !(hasKey && hasSource);
+        }
+
+        /**
+         * 将远程视频读取为内存中的 File 对象，不产生本地磁盘文件。
+         */
+        async function loadVideoFromUrl() {
+            const rawUrl = document.getElementById('videoUrl').value.trim();
+            let videoUrl;
+            try {
+                videoUrl = new URL(rawUrl);
+            } catch {
+                throw new Error('请输入有效的视频 URL');
+            }
+            if (!['http:', 'https:'].includes(videoUrl.protocol)) {
+                throw new Error('仅支持 HTTP 或 HTTPS 视频 URL');
+            }
+
+            updateProgress(5, '正在从 URL 读取加密视频...');
+            const response = await fetch(videoUrl.href, { cache: 'no-store', credentials: 'omit' });
+            if (!response.ok) {
+                throw new Error(`视频下载失败（HTTP ${response.status}）`);
+            }
+
+            const blob = await response.blob();
+            if (!blob.size) {
+                throw new Error('下载的视频为空');
+            }
+            const pathName = videoUrl.pathname.split('/').filter(Boolean).pop() || 'encrypted_video.mp4';
+            const filename = decodeURIComponent(pathName).split('?')[0] || 'encrypted_video.mp4';
+            encryptedVideoFile = new File([blob], filename, { type: blob.type || 'video/mp4' });
+            handleFile(encryptedVideoFile);
+            updateProgress(15, '视频已读取到内存，准备解密...');
         }
 
         /**
@@ -1005,10 +1208,7 @@
             `;
 
             // 启用解密按钮
-            const decodeKey = document.getElementById('decodeKeyFull').value.trim();
-            if (decodeKey) {
-                document.getElementById('decryptBtn').disabled = false;
-            }
+            updateDecryptButton();
 
             log(`<span class="success">✅ 已加载文件: ${file.name} (${(file.size / 1024 / 1024).toFixed(2)} MB)</span>\n`);
         }
@@ -1248,14 +1448,14 @@
          * 完整解密视频
          */
         async function decryptVideo() {
-            if (!encryptedVideoFile) {
-                alert('⚠️ 请先选择加密视频文件！');
-                return;
-            }
-
             const decodeKey = document.getElementById('decodeKeyFull').value.trim();
             if (!decodeKey) {
                 alert('⚠️ 请输入 decode_key！');
+                return;
+            }
+
+            if (videoSource === 'file' && !encryptedVideoFile) {
+                alert('⚠️ 请先选择加密视频文件！');
                 return;
             }
 
@@ -1263,6 +1463,14 @@
             document.getElementById('decryptBtn').disabled = true;
 
             try {
+                if (videoSource === 'url') {
+                    await loadVideoFromUrl();
+                }
+
+                if (!encryptedVideoFile) {
+                    throw new Error('未能读取加密视频');
+                }
+
                 log('╔═══════════════════════════════════════════════════════════╗');
                 log('║         微信视频号解密工具 - 完整解密流程                ║');
                 log('╚═══════════════════════════════════════════════════════════╝\n');
@@ -1493,14 +1701,8 @@
             }, 30000);
 
             // 监听 decode key 输入
-            document.getElementById('decodeKeyFull').addEventListener('input', function() {
-                const decodeKey = this.value.trim();
-                if (decodeKey && encryptedVideoFile) {
-                    document.getElementById('decryptBtn').disabled = false;
-                } else {
-                    document.getElementById('decryptBtn').disabled = true;
-                }
-            });
+            document.getElementById('decodeKeyFull').addEventListener('input', updateDecryptButton);
+            document.getElementById('videoUrl').addEventListener('input', updateDecryptButton);
         });
     </script>
 </body>
