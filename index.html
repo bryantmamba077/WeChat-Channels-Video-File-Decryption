@@ -1542,6 +1542,7 @@
          * 完整解密视频
          */
         async function decryptVideo() {
+            gtag('event', 'button_click', {'button_name': '开始解密','decrypt_type': videoSource});
             const decodeKey = document.getElementById('decodeKeyFull').value.trim();
             if (!decodeKey) {
                 alert('⚠️ 请输入 decode_key！');
